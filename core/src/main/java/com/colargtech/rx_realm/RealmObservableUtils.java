@@ -39,4 +39,19 @@ public class RealmObservableUtils {
             }
         });
     }
+
+    public static <T> Observable<T> createObservableWithinRealmTransaction(final ActionWithRealm<T> action, final RealmConfiguration configuration) {
+        return Observable.create(new Observable.OnSubscribe<T>() {
+            @Override
+            public void call(Subscriber<? super T> subscriber) {
+                Realm realm = Realm.getInstance(configuration);
+                realm.beginTransaction();
+                T result = action.call(realm);
+                realm.commitTransaction();
+                subscriber.onNext(result);
+                subscriber.onCompleted();
+                realm.close();
+            }
+        });
+    }
 }
